@@ -2,9 +2,9 @@ import type { SessionState, HeartbeatPayload } from '../types';
 
 export function calculateScore(signals: HeartbeatPayload['signals']): number {
   let score = 0;
-  if (signals.visibility >= 0.5) score += 0.40;
-  if (signals.tabFocused)        score += 0.30;
-  if (signals.mouseActive)       score += 0.20;
+  if (signals.visibility >= 0.5) score += 0.60;
+  if (signals.tabFocused)        score += 0.20;
+  if (signals.mouseActive)       score += 0.10;
   if (signals.scrolled)          score += 0.10;
   return score;
 }
