@@ -55,11 +55,11 @@ A functional demonstration of how the Vista SDK transforms a standard social med
 
 | Contract | Address |
 | :--- | :--- |
-| **MockUSDC** | `0xc1E4d04ACe35A360D01f820cEB5f29Dea49f4eA7` |
-| **VistaEscrow** | `0x0Fb9A8303c2c058223d82384E13FF5295b0ec033` |
-| **VistaReceipt** | `0x03e2b98453BCe7E41897af50969B535354DcfD0b` |
-| **VistaStream** | `0x10d3340fd8F760997FF5be2BcEBf8893FEECEeCF` |
-| **VistaVault** | `0x7D75f5c1817fd5B7eb0d110C67dF08493705AA10` |
+| **MockUSDC** | `0x27EA9B34D708ff7646F92Dab287DfD43EbBA0d19` |
+| **VistaEscrow** | `0x5EbC915380f012e4EB124778e47C1cba0a5d1788` |
+| **VistaReceipt** | `0xcAc54f8b507877dC6976BB17212173D454507E50` |
+| **VistaStream** | `0x387551ac55Bb6949d44715D07880f8c6260934B6` |
+| **VistaVault** | `0x221daDD6b4D6E78DAb7286f2d01a0d6f8d7aD32A` |
 
 ## 🛠️ Repository Structure
 
