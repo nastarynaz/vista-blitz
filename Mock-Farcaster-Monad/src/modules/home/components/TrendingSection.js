@@ -1,18 +1,51 @@
+"use client";
+
 import Link from "next/link";
-import { ChevronRight, Search } from 'lucide-react';
+import { ChevronRight, Search } from "lucide-react";
+import VistaEarningsPanel from "@/modules/vista/VistaEarningsPanel";
+import { useMemo } from "react";
+import { useBalance } from "wagmi";
+import { MONAD_CHAIN_ID } from "@/lib/auth/monad-chain";
 
+export default function TrendingSection({ channels, links, currentUser }) {
+  const walletAddress = currentUser?.address;
 
-export default function TrendingSection({
-  channels,
-  links,
-  currentUser,
-}) {
+  const {
+    data: walletBalance,
+    isPending: isBalanceLoading,
+    isError: isBalanceError,
+  } = useBalance({
+    address: walletAddress,
+    chainId: MONAD_CHAIN_ID,
+    query: {
+      enabled: Boolean(walletAddress),
+      refetchInterval: 15000,
+    },
+  });
+
+  const formattedBalance = useMemo(() => {
+    if (!walletBalance) {
+      return null;
+    }
+
+    const decimals = walletBalance.decimals;
+    const raw = Number(walletBalance.value) / 10 ** decimals;
+
+    return new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 6,
+    }).format(raw);
+  }, [walletBalance]);
+
   return (
-    <aside className="space-y-4 fixed">
+    <aside className="space-y-4 fixed mt-4">
       <div className="rounded-xl flex flex-row items-center border border-white/10 bg-[#0b0b0f] p-2.5">
         <Search className="h-6 w-6 text-zinc-400" />
-        <input className="flex items-center justify-between gap-2 px-3 py-2 w-full text-sm text-zinc-400 focus:outline-none" type="text" placeholder="Search casts, channels and users" >
-        </input>
+        <input
+          className="flex items-center justify-between gap-2 px-3 py-2 w-full text-sm text-zinc-400 focus:outline-none"
+          type="text"
+          placeholder="Search casts, channels and users"
+        ></input>
       </div>
 
       {/* <div className="rounded-2xl border border-white/10 bg-[#18181d] p-4">
@@ -39,7 +72,9 @@ export default function TrendingSection({
       </div> */}
 
       <div className="rounded-2xl border border-white/10 bg-[#0b0b0f] p-4">
-        <p className="mb-3 text-sm font-semibold text-zinc-400">Popular channels</p>
+        <p className="mb-3 text-sm font-semibold text-zinc-400">
+          Popular channels
+        </p>
         <div className="flex flex-wrap gap-2">
           {channels.map((channel) => (
             <button
@@ -54,32 +89,9 @@ export default function TrendingSection({
       </div>
 
       {/* <div className="rounded-2xl border border-white/10 bg-[#18181d] p-4"> */}
-        {/* <p className="mb-3 text-sm font-semibold text-zinc-300">Wallet</p> */}
-        {currentUser ? (
-          <div className="grid gap-3 rounded-xl border border-white/10 bg-black/40 p-4">
-            <p className="text-sm text-zinc-400">Wallet Connected as</p>
-            <p className="text-base font-bold text-white">{currentUser.displayName}</p>
-            <p className="font-mono text-sm text-zinc-300">{currentUser.handle}</p>
+      {/* <p className="mb-3 text-sm font-semibold text-zinc-300">Wallet</p> */}
 
-            <div className="mt-2">
-              <p className="text-xs uppercase tracking-wider text-emerald-300">USDC Balance</p>
-              <p className="mt-1 text-2xl font-semibold text-emerald-200">1,250.00 USDC</p>
-            </div>
-          </div>
-        ) : (
-          <div className="grid gap-3 rounded-xl border border-white/10 bg-black/40 p-4">
-            <p className="text-base font-semibold text-white">Wallet</p>
-            <p className="text-sm leading-relaxed text-zinc-400">
-              Login dulu untuk melihat wallet demo dan saldo USDC.
-            </p>
-            <Link
-              href="/auth"
-              className="mt-1 inline-flex items-center justify-center rounded-xl bg-linear-to-br from-violet-500 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110"
-            >
-              Login
-            </Link>
-          </div>
-        )}
+      <VistaEarningsPanel userWallet={currentUser?.address} />
       {/* </div> */}
     </aside>
   );

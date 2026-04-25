@@ -55,8 +55,3 @@ export interface OnboardingParams {
   wallet: string;
   dashboardUrl?: string;
 }
-
-export interface EarningOverlayParams {
-  campaignTitle?: string;
-  targetElement?: HTMLElement | null;
-}

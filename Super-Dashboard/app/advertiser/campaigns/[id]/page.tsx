@@ -30,6 +30,43 @@ import type { CampaignDetailData } from "@/lib/types"
 import { buildMonadExplorerUrl, formatDateTime, formatUsdc, truncateAddress, truncateHash } from "@/lib/utils"
 import { monadTestnet, wagmiConfig } from "@/lib/wagmi"
 
+function AudienceBreakdown({
+  title,
+  items,
+  emptyText,
+}: {
+  title: string
+  items: Array<{ label: string; count: number }>
+  emptyText: string
+}) {
+  const max = items[0]?.count ?? 1
+  return (
+    <div className="space-y-3">
+      <h3 className="text-sm font-semibold">{title}</h3>
+      {items.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{emptyText}</p>
+      ) : (
+        <div className="space-y-2">
+          {items.map((item) => (
+            <div key={item.label} className="space-y-1">
+              <div className="flex items-center justify-between text-sm">
+                <span className="capitalize">{item.label}</span>
+                <span className="tabular-nums text-muted-foreground">{item.count}</span>
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary/70"
+                  style={{ width: `${(item.count / max) * 100}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function CampaignDetailPage() {
   const params = useParams<{ id: string }>()
   const router = useRouter()
@@ -203,6 +240,39 @@ export default function CampaignDetailPage() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      <div className="rounded-[28px] border border-border/70 bg-card/90 p-4 sm:p-6">
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold tracking-tight">Audience Analytics</h2>
+          <p className="text-sm text-muted-foreground">Demographic breakdown of verified viewers for this campaign.</p>
+        </div>
+        <div className="grid gap-6 md:grid-cols-3">
+          <AudienceBreakdown
+            title="Top Preferences"
+            items={data.audienceAnalytics.preferenceBreakdown.slice(0, 8).map((item) => ({
+              label: item.preference,
+              count: item.count,
+            }))}
+            emptyText="No preference data yet."
+          />
+          <AudienceBreakdown
+            title="Age Distribution"
+            items={data.audienceAnalytics.ageBreakdown.map((item) => ({
+              label: item.range,
+              count: item.count,
+            }))}
+            emptyText="No age data yet."
+          />
+          <AudienceBreakdown
+            title="Top Locations"
+            items={data.audienceAnalytics.locationBreakdown.slice(0, 8).map((item) => ({
+              label: item.location,
+              count: item.count,
+            }))}
+            emptyText="No location data yet."
+          />
+        </div>
       </div>
 
       <div className="rounded-[28px] border border-border/70 bg-card/90 p-4 sm:p-6">

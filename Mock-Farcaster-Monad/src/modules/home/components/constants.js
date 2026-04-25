@@ -1,10 +1,3 @@
-export const DEMO_ACCOUNT = {
-  identifier: "demo@mirage.local",
-  password: "12345678",
-  displayName: "Demo mirage",
-  handle: "@demomirage",
-};
-
 export const SIDEBAR_ITEMS = [
   "Home",
   "Notifications",
@@ -205,7 +198,14 @@ export const FEED_POSTS = [
 
 export const RIGHT_LINKS = ["Support", "Privacy", "Terms", "Developers"];
 
-export const CHANNELS = ["/home", "/builders", "/design", "/monad", "/bcc", "/web3"];
+export const CHANNELS = [
+  "/home",
+  "/builders",
+  "/design",
+  "/monad",
+  "/bcc",
+  "/web3",
+];
 
 export const TRENDING_CASTS = [
   {

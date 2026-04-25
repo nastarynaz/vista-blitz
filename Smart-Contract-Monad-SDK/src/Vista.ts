@@ -8,7 +8,6 @@ import type {
   EarnCallbackData,
   VistaStatus,
   OnboardingParams,
-  EarningOverlayParams,
 } from './types';
 
 export class Vista {
@@ -27,9 +26,6 @@ export class Vista {
   private isFullscreenActive: boolean = false;
   private fullscreenchangeHandler: (() => void) | null = null;
   private trackedElementId: string | null = null;
-  private overlayIntervalId: number | null = null;
-  private overlayFullscreenHandler: (() => void) | null = null;
-  private overlayScrollHandler: (() => void) | null = null;
 
   // ─── Public API ───────────────────────────────────────────
 
@@ -82,7 +78,6 @@ export class Vista {
     this.collector?.destroy();
     this.collector = null;
     this.removeFullscreenListener();
-    this.removeEarningOverlay();
     this.isFullscreenActive = false;
     this.trackedElementId = null;
     this.postSessionEnd();
@@ -318,246 +313,7 @@ export class Vista {
     document.body.appendChild(modal);
   }
 
-  showEarningOverlay(params?: EarningOverlayParams): void {
-    if (typeof window === 'undefined') return;
-    if (document.getElementById('vista-earning-overlay')) return;
-
-    const fsEl    = document.fullscreenElement as HTMLElement | null;
-    const anchor  = params?.targetElement ?? null;
-
-    if (!document.getElementById('vista-overlay-styles')) {
-      const style = document.createElement('style');
-      style.id = 'vista-overlay-styles';
-      style.textContent = `
-        @keyframes vista-slide-in {
-          from { transform: translateX(12px) scale(0.96); opacity: 0; }
-          to   { transform: translateX(0)    scale(1);    opacity: 1; }
-        }
-        @keyframes vista-pulse-dot {
-          0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
-          50%       { opacity: 0.7; box-shadow: 0 0 0 5px rgba(34,197,94,0); }
-        }
-        #vista-earning-overlay { animation: vista-slide-in 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
-        #vista-overlay-close:hover { background: rgba(255,255,255,0.08) !important; color: #f0fdf4 !important; }
-      `;
-      document.head.appendChild(style);
-    }
-
-    const c = {
-      bg:         'rgba(10, 18, 30, 0.92)',
-      border:     'rgba(34, 197, 94, 0.22)',
-      primary:    '#22c55e',
-      primaryDim: 'rgba(34, 197, 94, 0.12)',
-      text:       '#f0fdf4',
-      muted:      '#94a3b8',
-      accent:     '#4ade80',
-      surface:    'rgba(255, 255, 255, 0.05)',
-    };
-
-    const OVERLAY_W = 272;
-    const OVERLAY_GAP = 14;
-
-    const status = this.getStatus();
-    const safeAmount  = isNaN(status.sessionAmount) ? 0 : status.sessionAmount;
-    const safeScore   = isNaN(status.score)         ? 0 : status.score;
-    const safeSecs    = isNaN(status.validSeconds)   ? 0 : status.validSeconds;
-
-    const overlay = document.createElement('div');
-    overlay.id = 'vista-earning-overlay';
-    Object.assign(overlay.style, {
-      position:             'fixed',
-      width:                `${OVERLAY_W}px`,
-      top:                  '-9999px',
-      left:                 '-9999px',
-      backgroundColor:      c.bg,
-      border:               `1px solid ${c.border}`,
-      borderRadius:         '18px',
-      padding:              '16px',
-      zIndex:               '2147483647',
-      fontFamily:           'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
-      color:                c.text,
-      backdropFilter:       'blur(16px)',
-      WebkitBackdropFilter: 'blur(16px)',
-      boxShadow:            '0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(34,197,94,0.08)',
-      userSelect:           'none',
-    });
-
-    const titleHtml = params?.campaignTitle
-      ? `<span style="font-size:11px;color:${c.muted};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px;">${params.campaignTitle}</span>`
-      : '';
-
-    const amountHtml = (v: number) =>
-      `$${v.toFixed(6)}&thinsp;<span style="font-size:13px;color:${c.accent};font-weight:600;">USDC</span>`;
-
-    overlay.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <div style="display:flex;align-items:center;gap:7px;">
-          <span style="font-size:15px;color:${c.accent};">✦</span>
-          <span style="font-size:12px;font-weight:700;letter-spacing:0.06em;color:${c.accent};">VISTA</span>
-          ${titleHtml}
-        </div>
-        <button id="vista-overlay-close" style="background:transparent;border:none;color:${c.muted};font-size:15px;cursor:pointer;padding:3px 7px;border-radius:8px;line-height:1;transition:background 0.15s,color 0.15s;">✕</button>
-      </div>
-
-      <div style="display:flex;align-items:center;gap:7px;padding:8px 11px;background:${c.primaryDim};border-radius:9px;border:1px solid rgba(34,197,94,0.18);margin-bottom:14px;">
-        <span id="vista-status-dot" style="width:8px;height:8px;border-radius:50%;background:${c.primary};flex-shrink:0;display:inline-block;animation:vista-pulse-dot 1.8s ease-in-out infinite;"></span>
-        <span id="vista-status-text" style="font-size:11px;font-weight:700;letter-spacing:0.07em;color:${c.primary};">MONETIZING ACTIVE</span>
-      </div>
-
-      <div style="margin-bottom:13px;">
-        <div style="font-size:10px;color:${c.muted};letter-spacing:0.09em;font-weight:600;text-transform:uppercase;margin-bottom:5px;">Session → Escrow</div>
-        <div id="vista-overlay-amount" style="font-size:24px;font-weight:700;color:${c.text};letter-spacing:-0.02em;line-height:1.1;">
-          ${amountHtml(safeAmount)}
-        </div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:13px;">
-        <div style="background:${c.surface};border-radius:10px;padding:9px 11px;">
-          <div style="font-size:10px;color:${c.muted};text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px;">Attention</div>
-          <div id="vista-overlay-score" style="font-size:16px;font-weight:700;">${Math.round(safeScore * 100)}%</div>
-        </div>
-        <div style="background:${c.surface};border-radius:10px;padding:9px 11px;">
-          <div style="font-size:10px;color:${c.muted};text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px;">Verified</div>
-          <div id="vista-overlay-seconds" style="font-size:16px;font-weight:700;">${safeSecs}s</div>
-        </div>
-      </div>
-
-      <div style="font-size:10px;color:${c.muted};padding-top:10px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:5px;">
-        <span style="font-size:12px;">⛓</span>
-        <span>Earnings settle to on-chain escrow every 10 seconds</span>
-      </div>
-    `;
-
-    document.body.appendChild(overlay);
-
-    // Position the overlay to the right of the anchor element (or inside fullscreen)
-    const positionOverlay = () => {
-      const el = document.getElementById('vista-earning-overlay');
-      if (!el) return;
-      if (fsEl && !anchor) {
-        // Inside fullscreen: absolute bottom-right
-        el.style.position = 'absolute';
-        el.style.bottom   = '12px';
-        el.style.right    = '12px';
-        el.style.top      = 'auto';
-        el.style.left     = 'auto';
-        return;
-      }
-      const ref = anchor ?? (fsEl as HTMLElement | null);
-      if (!ref) {
-        // Fallback: fixed bottom-right
-        el.style.bottom = '20px';
-        el.style.right  = '20px';
-        el.style.top    = 'auto';
-        el.style.left   = 'auto';
-        return;
-      }
-      const rect   = ref.getBoundingClientRect();
-      const gap    = OVERLAY_GAP;
-      const spaceR = window.innerWidth - rect.right - gap;
-      let left: number;
-      if (spaceR >= OVERLAY_W) {
-        left = rect.right + gap;
-      } else {
-        // Not enough room to the right — try left side
-        left = Math.max(4, rect.left - OVERLAY_W - gap);
-      }
-      const top = Math.max(4, rect.top + 4);
-      el.style.top  = `${top}px`;
-      el.style.left = `${left}px`;
-      el.style.bottom = 'auto';
-      el.style.right  = 'auto';
-    };
-
-    // Attach inside fullscreen element so it renders on top
-    if (fsEl && !anchor) {
-      fsEl.style.position = fsEl.style.position || 'relative';
-      fsEl.appendChild(overlay);
-      overlay.style.position = 'absolute';
-    }
-
-    positionOverlay();
-
-    document.getElementById('vista-overlay-close')?.addEventListener('click', () => {
-      this.removeEarningOverlay();
-    });
-
-    this.overlayScrollHandler = positionOverlay;
-    window.addEventListener('scroll', positionOverlay, { passive: true });
-    window.addEventListener('resize', positionOverlay, { passive: true });
-
-    let prevAmount = safeAmount;
-
-    this.overlayIntervalId = window.setInterval(() => {
-      const s       = this.getStatus();
-      const amount  = isNaN(s.sessionAmount) ? 0 : s.sessionAmount;
-      const score   = isNaN(s.score)         ? 0 : s.score;
-      const secs    = isNaN(s.validSeconds)   ? 0 : s.validSeconds;
-
-      const amountEl  = document.getElementById('vista-overlay-amount');
-      const scoreEl   = document.getElementById('vista-overlay-score');
-      const secondsEl = document.getElementById('vista-overlay-seconds');
-      const dotEl     = document.getElementById('vista-status-dot');
-      const textEl    = document.getElementById('vista-status-text');
-
-      if (amountEl && amount !== prevAmount) {
-        const from = prevAmount;
-        prevAmount = amount;
-        this.animateValue(amountEl, from, amount, 700, amountHtml);
-      }
-      if (scoreEl)   scoreEl.textContent   = `${Math.round(score * 100)}%`;
-      if (secondsEl) secondsEl.textContent = `${secs}s`;
-      if (dotEl)     dotEl.style.background = s.active ? c.primary : c.muted;
-      if (textEl) {
-        textEl.textContent = s.active ? 'MONETIZING ACTIVE' : 'TRACKING PAUSED';
-        textEl.style.color = s.active ? c.primary : c.muted;
-      }
-    }, 1000);
-
-    if (fsEl && !anchor) {
-      this.overlayFullscreenHandler = () => {
-        if (!document.fullscreenElement) this.removeEarningOverlay();
-      };
-      document.addEventListener('fullscreenchange', this.overlayFullscreenHandler);
-    }
-  }
-
   // ─── Private Methods ──────────────────────────────────────
-
-  private removeEarningOverlay(): void {
-    const el = document.getElementById('vista-earning-overlay');
-    if (el?.parentElement) el.parentElement.removeChild(el);
-    if (this.overlayIntervalId !== null) {
-      clearInterval(this.overlayIntervalId);
-      this.overlayIntervalId = null;
-    }
-    if (this.overlayFullscreenHandler) {
-      document.removeEventListener('fullscreenchange', this.overlayFullscreenHandler);
-      this.overlayFullscreenHandler = null;
-    }
-    if (this.overlayScrollHandler) {
-      window.removeEventListener('scroll', this.overlayScrollHandler);
-      window.removeEventListener('resize', this.overlayScrollHandler);
-      this.overlayScrollHandler = null;
-    }
-  }
-
-  private animateValue(
-    el: HTMLElement,
-    from: number,
-    to: number,
-    duration: number,
-    format: (v: number) => string,
-  ): void {
-    const startTime = performance.now();
-    const tick = (now: number) => {
-      const t      = Math.min((now - startTime) / duration, 1);
-      const eased  = 1 - Math.pow(1 - t, 3); // ease-out cubic
-      el.innerHTML = format(from + (to - from) * eased);
-      if (t < 1) requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  }
 
   private buildPayload(): HeartbeatPayload {
     const signals = this.collector!.collect();

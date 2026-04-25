@@ -28,17 +28,26 @@ export default function AdvertiserDashboardPage() {
   const { address } = useAccount()
   const [data, setData] = useState<AdvertiserDashboardData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!address) return
 
     let cancelled = false
+    setError(null)
 
     async function load() {
-      const result = await fetchJson<AdvertiserDashboardData>(`/api/dashboard/advertiser?wallet=${address}`)
-      if (!cancelled) {
-        setData(result)
-        setLoading(false)
+      try {
+        const result = await fetchJson<AdvertiserDashboardData>(`/api/dashboard/advertiser?wallet=${address}`)
+        if (!cancelled) {
+          setData(result)
+          setLoading(false)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Failed to load dashboard.")
+          setLoading(false)
+        }
       }
     }
 
@@ -48,6 +57,10 @@ export default function AdvertiserDashboardPage() {
       cancelled = true
     }
   }, [address])
+
+  if (error) {
+    return <LoadingScreen description={`Error: ${error}`} />
+  }
 
   if (loading || !data) {
     return <LoadingScreen description="Preparing advertiser spend, budget, and verification metrics." />

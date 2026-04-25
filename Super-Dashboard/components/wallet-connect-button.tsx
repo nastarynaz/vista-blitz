@@ -22,7 +22,14 @@ export function WalletConnectButton({ className }: { className?: string }) {
 
         if (!ready) {
           return (
-            <div className={cn(buttonVariants({ variant: "outline" }), className, "opacity-0")}>
+            <div
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                className,
+                "pointer-events-none invisible",
+              )}
+              suppressHydrationWarning
+            >
               Connect wallet
             </div>
           )
