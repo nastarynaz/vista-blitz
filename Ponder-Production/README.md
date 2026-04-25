@@ -57,6 +57,11 @@ pnpm dev       # hot-reload development mode
 pnpm start     # production mode
 ```
 
+### Railway deployment note
+
+- Production start command already sets a default schema: `ponder start --schema public`.
+- If you want a custom schema, set `DATABASE_SCHEMA` in Railway and change the start command accordingly.
+
 ---
 
 ## What each handler does
