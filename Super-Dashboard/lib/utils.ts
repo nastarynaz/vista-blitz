@@ -2,11 +2,6 @@ import { type ClassValue, clsx } from "clsx"
 import { keccak256, toHex } from "viem"
 import { twMerge } from "tailwind-merge"
 
-const usdcFormatter = new Intl.NumberFormat("en-US", {
-  minimumFractionDigits: 6,
-  maximumFractionDigits: 6,
-})
-
 const compactFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 1,
   notation: "compact",
