@@ -1,3 +1,20 @@
+import {
+  Bell,
+  Bookmark,
+  Circle,
+  House,
+  Settings,
+  UserRound,
+} from "lucide-react";
+
+const NAVBAR_ICONS = {
+  Home: House,
+  Notifications: Bell,
+  Bookmarks: Bookmark,
+  Settings,
+  Profile: UserRound,
+};
+
 export default function NavBar({ items, isLoggedIn, onLogout }) {
   return (
     <aside className="sticky top-0 hidden h-screen border-r border-white/10 p-4 lg:block">
@@ -9,6 +26,10 @@ export default function NavBar({ items, isLoggedIn, onLogout }) {
 
       <nav className="flex flex-col gap-1" aria-label="Main navigation">
         {items.map((item, index) => (
+          (() => {
+            const Icon = NAVBAR_ICONS[item] || Circle;
+
+            return (
           <button
             key={item}
             type="button"
@@ -18,9 +39,11 @@ export default function NavBar({ items, isLoggedIn, onLogout }) {
                 : "text-zinc-300 hover:bg-white/5 hover:text-white"
             }`}
           >
-            <span className="text-base leading-none">o</span>
+            <Icon className="h-4 w-4" aria-hidden="true" />
             <span className="text-base">{item}</span>
           </button>
+            );
+          })()
         ))}
       </nav>
 
@@ -38,7 +61,7 @@ export default function NavBar({ items, isLoggedIn, onLogout }) {
             href="/auth"
             className="block w-full rounded-full border border-white/15 bg-white/5 px-4 py-2 text-center text-sm font-semibold text-zinc-200 transition hover:bg-white/10"
           >
-            Login
+            Connect Wallet
           </a>
         )}
       </div>

@@ -1,8 +1,9 @@
-import { Heart, MessageCircle, Repeat2 } from "lucide-react";
+import { Heart, MessageCircle, Repeat2, Share } from "lucide-react";
 export default function HeroSection({ posts }) {
   return (
-    <section className="overflow-hidden rounded-2xl border border-white/10 bg-[#0b0b0f]">
-      <div className="flex items-center justify-between px-5 py-4">
+    <section className="mr-4 border-r border-white/10">
+      <div className="sticky top-0 z-20 bg-[#06070a]">
+        <div className="flex items-center justify-between px-5 py-4">
         <h1 className="text-3xl font-semibold text-white">Home</h1>
         <button
           type="button"
@@ -13,15 +14,17 @@ export default function HeroSection({ posts }) {
       </div>
 
       <div className="grid grid-cols-2 border-b border-white/10">
-        <button type="button" className="border-b-2 border-violet-500 px-4 py-3 text-sm font-semibold text-white">
-          Home
+        <button type="button" className="border-b-2 border-indigo-600 px-4 py-3 text-sm font-semibold text-white">
+          For you
         </button>
         <button type="button" className="px-4 py-3 text-sm font-semibold text-zinc-500">
           Following
         </button>
       </div>
+      </div>
+      
 
-      <div>
+      <div id="vista-content-zone">
         {posts.map((post) => (
           <article key={`${post.handle}-${post.timeAgo}`} className="border-b border-white/10 px-5 py-4">
             <div className="flex items-start gap-3">
@@ -43,8 +46,9 @@ export default function HeroSection({ posts }) {
                   </div>
                 ) : null}
 
-                <div className="mt-4 flex items-center gap-8 text-sm text-zinc-500">
-                  <span className="flex items-center gap-1">
+                <div className="mt-4 flex items-center justify-between text-sm text-zinc-500">
+                  <div className="flex flex-row gap-8">
+                    <span className="flex items-center gap-1">
                     <Heart className="h-4 w-4" />
                     {post.likes}
                   </span>
@@ -56,7 +60,10 @@ export default function HeroSection({ posts }) {
                     <MessageCircle className="h-4 w-4" />
                     {post.replies}
                   </span>
+                  </div>
+                  <Share className="h-4 w-4" />
                 </div>
+                  
               </div>
             </div>
           </article>

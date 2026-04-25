@@ -37,7 +37,7 @@ export default function LoginCard({
             type="email"
             value={identifier}
             onChange={(event) => onIdentifierChange(event.target.value)}
-            placeholder="demo@mirage.local"
+            placeholder="wallet@address"
             autoComplete="email"
             required
             className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white outline-none ring-violet-300/40 placeholder:text-zinc-500 focus:ring-2"
@@ -52,7 +52,7 @@ export default function LoginCard({
             type="password"
             value={password}
             onChange={(event) => onPasswordChange(event.target.value)}
-            placeholder="12345678"
+            placeholder="Sign message"
             autoComplete="current-password"
             required
             className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white outline-none ring-violet-300/40 placeholder:text-zinc-500 focus:ring-2"
@@ -67,13 +67,7 @@ export default function LoginCard({
             Login
           </button>
 
-          <p className="text-xs leading-relaxed text-zinc-400">
-            Demo account:
-            <br />
-            <span className="font-mono text-[0.78rem] text-zinc-300">
-              demo@mirage.local / 12345678
-            </span>
-          </p>
+          <p className="text-xs leading-relaxed text-zinc-400">Wallet auth memakai challenge + signature, bukan password statis.</p>
         </form>
       )}
     </aside>
