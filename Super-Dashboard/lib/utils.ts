@@ -33,8 +33,8 @@ export function safeNumber(value?: string | number | null): number {
   return 0
 }
 
-export function formatUsdc(value?: string | number | null) {
-  return usdcFormatter.format(safeNumber(value))
+export function formatUsdc(value?: string | number | null): number {
+  return Number(safeNumber(value).toFixed(6))
 }
 
 export function formatCompactNumber(value?: string | number | null) {
