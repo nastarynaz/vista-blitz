@@ -9,11 +9,9 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.5",
-    "autoprefixer": "^10.5.0",
     "jose": "^6.1.0",
     "lucide-react": "^1.8.0",
     "next": "16.2.4",
-    "postcss": "^8.5.10",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "viem": "^2.38.6",
@@ -23,6 +21,6 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "babel-plugin-react-compiler": "1.0.0",
-    "tailwindcss": "^4.2.4"
+    "tailwindcss": "^4"
   }
 }

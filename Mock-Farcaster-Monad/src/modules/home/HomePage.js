@@ -17,7 +17,14 @@ function toWalletUser(address) {
 
 export default function HomePage() {
   const [currentUser, setCurrentUser] = useState(null);
-  const vistaState = useVista({ userWallet: currentUser?.address, zoneId: "vista-content-zone" });
+  const [campaigns, setCampaigns] = useState([]);
+
+  const activeCampaignId = campaigns[0]?.campaign_id_onchain ?? null;
+  const vistaState = useVista({
+    userWallet: currentUser?.address,
+    zoneId: "vista-content-zone",
+    campaignId: activeCampaignId,
+  });
 
   useEffect(() => {
     let isActive = true;
@@ -30,24 +37,18 @@ export default function HomePage() {
         });
 
         if (!response.ok) {
-          if (isActive) {
-            setCurrentUser(null);
-          }
+          if (isActive) setCurrentUser(null);
           return;
         }
 
         const payload = await response.json();
         const address = payload?.user?.address;
 
-        if (!address || !isActive) {
-          return;
-        }
+        if (!address || !isActive) return;
 
         setCurrentUser(toWalletUser(address));
       } catch {
-        if (isActive) {
-          setCurrentUser(null);
-        }
+        if (isActive) setCurrentUser(null);
       }
     }
 
@@ -58,12 +59,19 @@ export default function HomePage() {
     };
   }, []);
 
-  async function handleLogout() {
-    await fetch("/api/auth/logout", {
-      method: "POST",
-    });
+  useEffect(() => {
+    if (!currentUser?.address) return;
 
+    fetch(`/api/ads?userWallet=${encodeURIComponent(currentUser.address)}`)
+      .then((r) => r.json())
+      .then(({ campaigns: fetched }) => setCampaigns(fetched ?? []))
+      .catch(() => {});
+  }, [currentUser?.address]);
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
     setCurrentUser(null);
+    setCampaigns([]);
   }
 
   return (
@@ -72,7 +80,7 @@ export default function HomePage() {
         <NavBar items={SIDEBAR_ITEMS} isLoggedIn={Boolean(currentUser)} onLogout={handleLogout} />
 
         <section id="discover" className="min-w-0">
-          <HeroSection posts={FEED_POSTS} />
+          <HeroSection posts={FEED_POSTS} ads={campaigns} />
         </section>
 
         <section className="min-w-0">
