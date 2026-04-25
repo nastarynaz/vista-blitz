@@ -211,7 +211,7 @@ export default function PublisherDashboardPage() {
         <StatCard
           icon={Coins}
           title="Total USDC Withdrawn"
-          value={formatUsdc(totalWithdrawn)}
+          value={totalWithdrawn}
           format="usdc"
         />
         <StatCard
