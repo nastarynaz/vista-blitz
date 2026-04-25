@@ -5,7 +5,7 @@ export const erc20Abi = parseAbi([
 ])
 
 export const vistaEscrowAbi = parseAbi([
-  "function deposit(bytes32 campaignId, uint256 amount) external",
+  "function deposit(bytes32 campaignId, uint256 amount, uint256 ratePerSecond, uint256 duration) external",
   "function refundRemaining(bytes32 campaignId) external",
 ])
 

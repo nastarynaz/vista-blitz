@@ -1,52 +1,58 @@
-"use client"
+"use client";
 
-import { useConnectModal } from "@rainbow-me/rainbowkit"
-import { useRouter } from "next/navigation"
-import { useEffect } from "react"
-import { useAccount } from "wagmi"
+import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useAccount } from "wagmi";
 
-import { LoadingScreen } from "@/components/loading-screen"
-import { roleMeta } from "@/lib/constants"
-import { fetchJson } from "@/lib/http"
-import type { RoleName } from "@/lib/types"
+import { LoadingScreen } from "@/components/loading-screen";
+import { roleMeta } from "@/lib/constants";
+import { fetchJson } from "@/lib/http";
+import type { RoleName } from "@/lib/types";
 
 export function RoleEntryRedirect({ role }: { role: RoleName }) {
-  const router = useRouter()
-  const { openConnectModal } = useConnectModal()
-  const { address, isConnected } = useAccount()
+  const router = useRouter();
+  const { openConnectModal } = useConnectModal();
+  const { address, isConnected, status } = useAccount();
 
   useEffect(() => {
-    let cancelled = false
+    let cancelled = false;
 
     async function resolveDestination() {
-      if (!isConnected || !address) {
-        router.replace("/")
-        openConnectModal?.()
-        return
+      if (status === "connecting" || status === "reconnecting") {
+        return; // Wait for connection to resolve
       }
 
-      const status = await fetchJson<{ registered: boolean }>(
-        `/api/roles/status?role=${role}&wallet=${address}`
-      )
+      if (!isConnected || !address) {
+        router.replace("/");
+        openConnectModal?.();
+        return;
+      }
 
-      if (cancelled) return
+      const statusRes = await fetchJson<{ registered: boolean }>(
+        `/api/roles/status?role=${role}&wallet=${address}`,
+      );
+
+      if (cancelled) return;
 
       router.replace(
-        status.registered ? roleMeta[role].dashboardPath : roleMeta[role].onboardingPath
-      )
+        statusRes.registered
+          ? roleMeta[role].dashboardPath
+          : roleMeta[role].onboardingPath,
+      );
     }
 
-    void resolveDestination()
+    void resolveDestination();
 
     return () => {
-      cancelled = true
-    }
-  }, [address, isConnected, openConnectModal, role, router])
+      cancelled = true;
+    };
+  }, [address, isConnected, openConnectModal, role, router, status]);
 
   return (
     <LoadingScreen
       title={`Opening ${roleMeta[role].label} workspace`}
       description="Routing you to the correct step based on this wallet."
     />
-  )
+  );
 }

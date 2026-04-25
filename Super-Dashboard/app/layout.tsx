@@ -1,8 +1,11 @@
 import "@rainbow-me/rainbowkit/styles.css"
 import type { Metadata } from "next"
 import localFont from "next/font/local"
+import { headers } from "next/headers"
+import { cookieToInitialState } from "wagmi"
 
 import { Providers } from "@/components/providers"
+import { wagmiConfig } from "@/lib/wagmi"
 import "./globals.css"
 
 const geistSans = localFont({
@@ -35,10 +38,12 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const initialState = cookieToInitialState(wagmiConfig, headers().get("cookie"))
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} theme min-h-screen bg-background text-foreground antialiased`}>
-        <Providers>{children}</Providers>
+        <Providers initialState={initialState}>{children}</Providers>
       </body>
     </html>
   )

@@ -1,8 +1,10 @@
-import { getDefaultConfig } from "@rainbow-me/rainbowkit"
 import { defineChain, http } from "viem"
-import { createStorage, noopStorage } from "wagmi"
+import { cookieStorage, createConfig, createStorage } from "wagmi"
+import { coinbaseWallet, injected, walletConnect } from "wagmi/connectors"
 
 import { APP_NAME, MONAD_TESTNET } from "@/lib/constants"
+
+const PROJECT_ID = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "vista-demo-walletconnect"
 
 export const monadTestnet = defineChain({
   id: MONAD_TESTNET.id,
@@ -30,17 +32,18 @@ export const monadTestnet = defineChain({
   testnet: true,
 })
 
-export const wagmiConfig = getDefaultConfig({
-  appName: APP_NAME,
-  appDescription: "Real-time attention monetization dashboard for VISTA Protocol.",
-  appUrl: "https://vista.protocol",
-  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "vista-demo-walletconnect",
+export const wagmiConfig = createConfig({
   chains: [monadTestnet],
+  connectors: [
+    injected(),
+    walletConnect({ projectId: PROJECT_ID }),
+    coinbaseWallet({ appName: APP_NAME }),
+  ],
   transports: {
     [monadTestnet.id]: http(process.env.NEXT_PUBLIC_MONAD_RPC || MONAD_TESTNET.rpcUrl),
   },
   storage: createStorage({
-    storage: noopStorage,
+    storage: cookieStorage,
   }),
   ssr: true,
 })
