@@ -93,6 +93,7 @@ export default function HomePage() {
             channels={CHANNELS}
             links={RIGHT_LINKS}
             currentUser={currentUser}
+            vistaState={vistaState}
           />
         </section>
       </main>
