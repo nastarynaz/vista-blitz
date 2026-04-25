@@ -11,6 +11,9 @@ const VistaVaultAbi = VistaVaultAbiJson as Abi;
 const VistaReceiptAbi = VistaReceiptAbiJson as Abi;
 
 export default createConfig({
+  database: {
+    schema: process.env.DATABASE_SCHEMA ?? "public",
+  },
   chains: {
     monadTestnet: {
       id: 10143,
