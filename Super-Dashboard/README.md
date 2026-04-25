@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VISTA Protocol Dashboard
 
-## Getting Started
+Next.js 14 dashboard for VISTA Protocol, a real-time attention monetization protocol where users earn USDC for verified ad viewing across Web3 platforms.
 
-First, run the development server:
+## Stack
+
+- Next.js 14 App Router
+- TypeScript
+- Tailwind CSS + shadcn/ui
+- RainbowKit + wagmi on Monad Testnet
+- Supabase PostgreSQL + Realtime
+- Recharts
+
+## Environment Variables
+
+Create `.env.local`:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=
+NEXT_PUBLIC_VISTA_STREAM_ADDRESS=
+NEXT_PUBLIC_VISTA_ESCROW_ADDRESS=
+NEXT_PUBLIC_MOCK_USDC_ADDRESS=
+NEXT_PUBLIC_MONAD_RPC=https://rpc.ankr.com/monad_testnet
+NEXT_PUBLIC_ORACLE_WS_URL=
+ORACLE_WEBHOOK_SECRET=
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`NEXT_PUBLIC_ORACLE_WS_URL` is included because the live user counter listens to the Oracle WebSocket directly.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Setup Supabase
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Create a new Supabase project.
+2. Open SQL Editor.
+3. Run [`supabase/schema.sql`](./supabase/schema.sql).
+4. In Supabase Realtime settings, make sure table replication is enabled for:
+   `campaigns`, `sessions`, `stream_ticks`, and `receipts`.
+5. Copy the project URL and anon key into `.env.local`.
 
-## Learn More
+The SQL file includes:
 
-To learn more about Next.js, take a look at the following resources:
+- all requested tables
+- basic indexes for wallet and on-chain IDs
+- permissive hackathon policies so route handlers work with the anon key
+- publication updates for realtime tables
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Install And Run
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm install
+npm run dev
+```
 
-## Deploy on Vercel
+If you prefer pnpm, `pnpm install` also works.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Demo Mode
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+When Supabase env vars or contract addresses are missing, the app still renders using local mock data so the product flow remains explorable. On-chain launch/refund actions fall back to demo-mode notifications until contract env vars are configured.
+
+## Important Routes
+
+- `/` landing page + role selector
+- `/advertiser/*` advertiser onboarding, dashboard, campaigns, and campaign detail
+- `/publisher/*` publisher onboarding, dashboard, and analytics
+- `/user/*` user onboarding, live earnings dashboard, and history
+
+## API Routes
+
+- `POST /api/users`
+- `GET /api/users/[wallet]`
+- `POST /api/publishers`
+- `GET /api/publishers/[wallet]/analytics`
+- `POST /api/advertisers`
+- `POST /api/campaigns`
+- `GET /api/campaigns/active`
+- `POST /api/sessions`
+- `POST /api/ticks`
+- `POST /api/receipts`
+
+Additional internal routes are included for dashboard data, role access checks, campaign detail, and user history.
