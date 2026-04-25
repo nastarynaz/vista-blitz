@@ -4,6 +4,7 @@ import type {
   ActiveCampaignResult,
   AdvertiserDashboardData,
   AdvertiserRecord,
+  CampaignAudienceAnalytics,
   CampaignDetailData,
   CampaignListItem,
   CampaignRecord,
@@ -281,6 +282,30 @@ async function selectCampaignsByWallet(wallet: string) {
   );
 }
 
+async function selectAllCampaigns(): Promise<CampaignRecord[]> {
+  const supabase = createServerSupabaseClient();
+
+  if (!supabase) {
+    throw new Error("Supabase client is not configured");
+  }
+
+  const { data, error } = await supabase
+    .from("campaigns")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? []).map((row) =>
+    normalizeCampaign(row as Record<string, unknown>),
+  );
+}
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 async function selectCampaignById(id: string) {
   const supabase = createServerSupabaseClient();
 
@@ -288,16 +313,18 @@ async function selectCampaignById(id: string) {
     throw new Error("Supabase client is not configured");
   }
 
-  const direct = await supabase
-    .from("campaigns")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
-  if (direct.error) {
-    throw new Error(direct.error.message);
-  }
-  if (direct.data) {
-    return normalizeCampaign(direct.data as Record<string, unknown>);
+  if (UUID_PATTERN.test(id)) {
+    const direct = await supabase
+      .from("campaigns")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+    if (direct.error) {
+      throw new Error(direct.error.message);
+    }
+    if (direct.data) {
+      return normalizeCampaign(direct.data as Record<string, unknown>);
+    }
   }
 
   const onchain = await supabase
@@ -326,6 +353,7 @@ async function selectSessions(filters?: {
   if (!supabase) {
     throw new Error("Supabase client is not configured");
   }
+  console.log("SESSIONS");
 
   let query = supabase
     .from("sessions")
@@ -402,6 +430,73 @@ async function selectTicks(filters?: {
   return (data ?? []).map((row) =>
     normalizeTick(row as Record<string, unknown>),
   );
+}
+
+async function selectUsersByWallets(wallets: string[]): Promise<UserRecord[]> {
+  if (!wallets.length) return [];
+  const supabase = createServerSupabaseClient();
+  if (!supabase) throw new Error("Supabase client is not configured");
+
+  const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .in("wallet_address", wallets);
+
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map((row) => ({
+    wallet_address: normalizeWallet(String(row.wallet_address)),
+    age: row.age != null ? Number(row.age) : null,
+    location: row.location ? String(row.location) : null,
+    preferences: (row.preferences as PreferenceOption[] | null) ?? null,
+    created_at: String(row.created_at),
+  }));
+}
+
+function buildAudienceAnalytics(users: UserRecord[]): CampaignAudienceAnalytics {
+  const prefCounts = new Map<string, number>();
+  for (const user of users) {
+    for (const pref of user.preferences ?? []) {
+      prefCounts.set(pref, (prefCounts.get(pref) ?? 0) + 1);
+    }
+  }
+
+  const ageBuckets: Record<string, number> = {
+    "Under 18": 0,
+    "18–24": 0,
+    "25–34": 0,
+    "35–44": 0,
+    "45–54": 0,
+    "55+": 0,
+  };
+  for (const user of users) {
+    if (user.age == null) continue;
+    if (user.age < 18) ageBuckets["Under 18"]++;
+    else if (user.age <= 24) ageBuckets["18–24"]++;
+    else if (user.age <= 34) ageBuckets["25–34"]++;
+    else if (user.age <= 44) ageBuckets["35–44"]++;
+    else if (user.age <= 54) ageBuckets["45–54"]++;
+    else ageBuckets["55+"]++;
+  }
+
+  const locCounts = new Map<string, number>();
+  for (const user of users) {
+    if (user.location) {
+      locCounts.set(user.location, (locCounts.get(user.location) ?? 0) + 1);
+    }
+  }
+
+  return {
+    preferenceBreakdown: Array.from(prefCounts.entries())
+      .sort(([, a], [, b]) => b - a)
+      .map(([preference, count]) => ({ preference, count })),
+    ageBreakdown: Object.entries(ageBuckets)
+      .filter(([, count]) => count > 0)
+      .map(([range, count]) => ({ range, count })),
+    locationBreakdown: Array.from(locCounts.entries())
+      .sort(([, a], [, b]) => b - a)
+      .map(([location, count]) => ({ location, count })),
+  };
 }
 
 async function selectReceipts(userWallet?: string) {
@@ -676,9 +771,14 @@ export async function getCampaignDetail(
   const sessions = await selectSessions({
     campaignIdOnchain: campaign.campaign_id_onchain,
   });
-  const ticks = await selectTicks({
-    sessionIds: sessions.map((session) => session.session_id_onchain),
-  });
+  const [ticks, viewers] = await Promise.all([
+    selectTicks({
+      sessionIds: sessions.map((session) => session.session_id_onchain),
+    }),
+    selectUsersByWallets(
+      Array.from(new Set(sessions.map((session) => session.user_wallet))),
+    ),
+  ]);
 
   return {
     campaign,
@@ -702,6 +802,7 @@ export async function getCampaignDetail(
     sessions: sessions.map((session) =>
       toSessionListItem(session, [campaign], ticks),
     ),
+    audienceAnalytics: buildAudienceAnalytics(viewers),
   };
 }
 
@@ -746,19 +847,12 @@ export async function getPublisherDashboard(
 export async function getPublisherAnalytics(
   wallet: string,
 ): Promise<PublisherAnalyticsData> {
-  const sessions = await selectSessions({ publisherWallet: wallet });
-  const ticks = await selectTicks({ publisherWallet: wallet });
-  const campaigns = await Promise.all(
-    Array.from(
-      new Set(sessions.map((session) => session.campaign_id_onchain)),
-    ).map((id) => selectCampaignById(id)),
-  );
-  const campaignLookup = new Map(
-    (campaigns.filter(Boolean) as CampaignRecord[]).map((campaign) => [
-      campaign.campaign_id_onchain,
-      campaign,
-    ]),
-  );
+  const [sessions, ticks, allCampaigns] = await Promise.all([
+    selectSessions({ publisherWallet: wallet }),
+    selectTicks({ publisherWallet: wallet }),
+    selectAllCampaigns(),
+  ]);
+
   const breakdownMap = new Map<
     string,
     { revenue: number; impressions: number; viewerSeconds: number }
@@ -803,16 +897,15 @@ export async function getPublisherAnalytics(
     }));
 
   return {
-    breakdownByCampaign: Array.from(breakdownMap.entries()).map(
-      ([campaignIdOnchain, summary]) => ({
-        campaignIdOnchain,
-        campaignTitle:
-          campaignLookup.get(campaignIdOnchain)?.title ?? "Unknown campaign",
-        revenue: summary.revenue,
-        impressions: summary.impressions,
-        viewerSeconds: summary.viewerSeconds,
+    breakdownByCampaign: allCampaigns.map((campaign) => ({
+      campaignIdOnchain: campaign.campaign_id_onchain,
+      campaignTitle: campaign.title,
+      ...(breakdownMap.get(campaign.campaign_id_onchain) ?? {
+        revenue: 0,
+        impressions: 0,
+        viewerSeconds: 0,
       }),
-    ),
+    })),
     topTimeSlots,
     averageSessionDuration: average(
       sessions.map((session) => session.seconds_verified),
@@ -846,12 +939,26 @@ export async function createSession(input: {
 
   const { data, error } = await supabase
     .from("sessions")
-    .insert(payload)
+    .upsert(payload, {
+      onConflict: "session_id_onchain",
+      ignoreDuplicates: true,
+    })
     .select("*")
-    .single();
+    .maybeSingle();
 
   if (error) {
     throw new Error(error.message);
+  }
+
+  if (!data) {
+    // Session already exists (duplicate from oracle + ponder both firing) — fetch the existing one
+    const existing = await supabase
+      .from("sessions")
+      .select("*")
+      .eq("session_id_onchain", payload.session_id_onchain)
+      .single();
+    if (existing.error) throw new Error(existing.error.message);
+    return normalizeSession(existing.data as Record<string, unknown>);
   }
 
   return normalizeSession(data as Record<string, unknown>);
@@ -875,6 +982,21 @@ export async function recordTick(payload: OracleTickPayload) {
   if (!supabase) {
     throw new Error("Supabase client is not configured");
   }
+
+  // Deduplicate: Oracle and Ponder both call this endpoint for the same on-chain tick.
+  // Return early if a tick for this session already exists within a 30-second window.
+  const blockTs = new Date(payload.blockTimestamp).getTime();
+  const dupCheck = await supabase
+    .from("stream_ticks")
+    .select("*")
+    .eq("session_id_onchain", tickRecord.session_id_onchain)
+    .gte("block_timestamp", new Date(blockTs - 30_000).toISOString())
+    .lte("block_timestamp", new Date(blockTs + 30_000).toISOString())
+    .maybeSingle();
+
+  if (dupCheck.error) throw new Error(dupCheck.error.message);
+  if (dupCheck.data)
+    return normalizeTick(dupCheck.data as Record<string, unknown>);
 
   const sessionQuery = await supabase
     .from("sessions")
@@ -950,7 +1072,6 @@ export async function recordTick(payload: OracleTickPayload) {
 
 export async function createReceipt(payload: OracleReceiptPayload) {
   const supabase = createServerSupabaseClient();
-
   if (!supabase) {
     throw new Error("Supabase client is not configured");
   }
@@ -962,8 +1083,31 @@ export async function createReceipt(payload: OracleReceiptPayload) {
       .select("advertiser_wallet")
       .eq("campaign_id_onchain", payload.campaignIdOnchain)
       .maybeSingle();
-    advertiserWallet = (campaignRow.data as Record<string, unknown> | null)?.advertiser_wallet as string ?? "";
+    advertiserWallet =
+      ((campaignRow.data as Record<string, unknown> | null)
+        ?.advertiser_wallet as string) ?? "";
   }
+
+  // Query stream_ticks to get breakdown of amounts
+  const ticksQuery = await supabase
+    .from("stream_ticks")
+    .select("user_amount, publisher_amount")
+    .eq("session_id_onchain", payload.sessionIdOnchain);
+
+  if (ticksQuery.error) {
+    throw new Error(ticksQuery.error.message);
+  }
+
+  const ticks =
+    (ticksQuery.data as Array<{
+      user_amount: number;
+      publisher_amount: number;
+    }>) ?? [];
+  const totalUserAmount = ticks.reduce((sum, t) => sum + t.user_amount, 0);
+  const totalPublisherAmount = ticks.reduce(
+    (sum, t) => sum + t.publisher_amount,
+    0,
+  );
 
   const receipt: ReceiptRecord = {
     id: crypto.randomUUID(),
@@ -977,14 +1121,56 @@ export async function createReceipt(payload: OracleReceiptPayload) {
     minted_at: payload.mintedAt,
   };
 
-  const { data, error } = await supabase
+  const { data: receiptData, error: receiptError } = await supabase
     .from("receipts")
     .insert(receipt)
     .select("*")
     .single();
 
-  if (error) {
-    throw new Error(error.message);
+  if (receiptError) {
+    throw new Error(receiptError.message);
+  }
+
+  // Create vault credits for user
+  if (totalUserAmount > 0) {
+    const userCredit: VaultCreditRecord = {
+      id: crypto.randomUUID(),
+      wallet_address: normalizeWallet(payload.userWallet),
+      session_id_onchain: payload.sessionIdOnchain,
+      campaign_id_onchain: payload.campaignIdOnchain,
+      amount: totalUserAmount,
+      role: 0, // user
+      credited_at: payload.mintedAt,
+    };
+    const { error: userCreditError } = await supabase
+      .from("vault_credits")
+      .insert(userCredit);
+    if (userCreditError) {
+      throw new Error(
+        `Failed to create user vault credit: ${userCreditError.message}`,
+      );
+    }
+  }
+
+  // Create vault credits for publisher
+  if (totalPublisherAmount > 0) {
+    const publisherCredit: VaultCreditRecord = {
+      id: crypto.randomUUID(),
+      wallet_address: normalizeWallet(payload.publisherWallet),
+      session_id_onchain: payload.sessionIdOnchain,
+      campaign_id_onchain: payload.campaignIdOnchain,
+      amount: totalPublisherAmount,
+      role: 1, // publisher
+      credited_at: payload.mintedAt,
+    };
+    const { error: publisherCreditError } = await supabase
+      .from("vault_credits")
+      .insert(publisherCredit);
+    if (publisherCreditError) {
+      throw new Error(
+        `Failed to create publisher vault credit: ${publisherCreditError.message}`,
+      );
+    }
   }
 
   const sessionUpdate = await supabase
@@ -993,6 +1179,7 @@ export async function createReceipt(payload: OracleReceiptPayload) {
       active: false,
       ended_at: payload.mintedAt,
       seconds_verified: payload.secondsVerified,
+      total_paid_usdc: payload.usdcPaid,
     })
     .eq("session_id_onchain", payload.sessionIdOnchain);
 
@@ -1000,7 +1187,7 @@ export async function createReceipt(payload: OracleReceiptPayload) {
     throw new Error(sessionUpdate.error.message);
   }
 
-  return normalizeReceipt(data as Record<string, unknown>);
+  return normalizeReceipt(receiptData as Record<string, unknown>);
 }
 
 export async function getActiveCampaignsForUser(
@@ -1034,9 +1221,11 @@ export async function getActiveCampaignsForUser(
 export async function getUserDashboard(
   wallet: string,
 ): Promise<UserDashboardData> {
-  const sessions = await selectSessions({ userWallet: wallet });
-  const receipts = await selectReceipts(wallet);
-  const ticks = await selectTicks({ userWallet: wallet });
+  const [sessions, ticks, vaultBalance] = await Promise.all([
+    selectSessions({ userWallet: wallet }),
+    selectTicks({ userWallet: wallet }),
+    getVaultBalance(wallet),
+  ]);
   const campaigns = await Promise.all(
     Array.from(
       new Set(sessions.map((session) => session.campaign_id_onchain)),
@@ -1077,7 +1266,7 @@ export async function getUserDashboard(
 
   return {
     stats: {
-      totalUsdcEarned: sumNumbers(receipts.map((receipt) => receipt.usdc_paid)),
+      totalUsdcEarned: vaultBalance.totalEarned,
       totalSessionsCompleted: sessions.filter((session) => !session.active)
         .length,
       totalSecondsVerified: sumNumbers(
@@ -1094,6 +1283,11 @@ export async function getUserDashboard(
           ? mostRecentTick.user_amount / mostRecentTick.seconds_elapsed
           : 0,
       verified: Boolean(activeSession),
+    },
+    vault: {
+      totalEarned: vaultBalance.totalEarned,
+      totalWithdrawn: vaultBalance.totalWithdrawn,
+      availableBalance: vaultBalance.availableBalance,
     },
   };
 }
@@ -1383,11 +1577,60 @@ export async function endSession(input: {
     throw new Error("Supabase client is not configured");
   }
 
+  // Reconstruct missing ticks if oracle sent incomplete data
+  const { data: ticks, error: ticksError } = await supabase
+    .from("stream_ticks")
+    .select("seconds_elapsed, session_id_onchain")
+    .eq("session_id_onchain", input.sessionIdOnchain);
+
+  if (ticksError) throw new Error(ticksError.message);
+
+  const totalRecordedSeconds = sumNumbers(
+    (ticks ?? []).map((t) => t.seconds_elapsed as number),
+  );
+
+  if (totalRecordedSeconds < input.secondsVerified) {
+    const missingSeconds = input.secondsVerified - totalRecordedSeconds;
+    const missingTotalAmount =
+      (missingSeconds / input.secondsVerified) * input.totalPaid;
+    const missingUserAmount = (missingTotalAmount * 40) / 100;
+    const missingPublisherAmount = (missingTotalAmount * 50) / 100;
+    // Vista amount is the remainder (not currently used for tracking in stream_ticks)
+
+    // Get session to extract user/publisher wallets
+    const { data: session, error: sessionError } = await supabase
+      .from("sessions")
+      .select("user_wallet, publisher_wallet, campaign_id_onchain")
+      .eq("session_id_onchain", input.sessionIdOnchain)
+      .single();
+
+    if (sessionError) throw new Error(sessionError.message);
+
+    const syntheticTick = {
+      id: crypto.randomUUID(),
+      session_id_onchain: input.sessionIdOnchain,
+      user_wallet: (session as Record<string, unknown>).user_wallet as string,
+      publisher_wallet: (session as Record<string, unknown>)
+        .publisher_wallet as string,
+      user_amount: missingUserAmount,
+      publisher_amount: missingPublisherAmount,
+      total_amount: missingTotalAmount,
+      seconds_elapsed: missingSeconds,
+      block_timestamp: input.endedAt,
+      created_at: new Date().toISOString(),
+    };
+
+    const { error: insertError } = await supabase
+      .from("stream_ticks")
+      .insert(syntheticTick);
+
+    if (insertError) throw new Error(insertError.message);
+  }
+
   const { error } = await supabase
     .from("sessions")
     .update({
       active: false,
-      confirmed_onchain: true,
       seconds_verified: input.secondsVerified,
       total_paid_usdc: input.totalPaid,
       ended_at: input.endedAt,
@@ -1409,7 +1652,7 @@ export async function confirmCampaign(
 
   const { error } = await supabase
     .from("campaigns")
-    .update({ confirmed_onchain: true })
+    .update({ active: true })
     .eq("campaign_id_onchain", campaignIdOnchain);
 
   if (error) throw new Error(error.message);

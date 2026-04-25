@@ -1,29 +1,29 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
-import { BrandMark } from "@/components/brand-mark"
-import { RoleGuard } from "@/components/role-guard"
-import { RoleSwitcher } from "@/components/role-switcher"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { WalletConnectButton } from "@/components/wallet-connect-button"
-import { buttonVariants } from "@/components/ui/button"
-import { roleMeta, roleNavigation } from "@/lib/constants"
-import type { RoleName } from "@/lib/types"
-import { cn } from "@/lib/utils"
+import { BrandMark } from "@/components/brand-mark";
+import { RoleGuard } from "@/components/role-guard";
+import { RoleSwitcher } from "@/components/role-switcher";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { WalletConnectButton } from "@/components/wallet-connect-button";
+import { buttonVariants } from "@/components/ui/button";
+import { roleMeta, roleNavigation } from "@/lib/constants";
+import type { RoleName } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 export function DashboardLayout({
   role,
   children,
 }: {
-  role: RoleName
-  children: React.ReactNode
+  role: RoleName;
+  children: React.ReactNode;
 }) {
-  const pathname = usePathname()
-  const meta = roleMeta[role]
-  const isOnboarding = pathname === meta.onboardingPath
-  const isEntryRoute = pathname === `/${role}`
+  const pathname = usePathname();
+  const meta = roleMeta[role];
+  const isOnboarding = pathname === meta.onboardingPath;
+  const isEntryRoute = pathname === `/${role}`;
 
   return (
     <RoleGuard
@@ -43,7 +43,9 @@ export function DashboardLayout({
                 <div className="flex items-center gap-2">
                   <RoleSwitcher currentRole={role} />
                 </div>
-                <p className="text-xs text-muted-foreground">{meta.description}</p>
+                <p className="text-xs text-muted-foreground">
+                  {meta.description}
+                </p>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -56,20 +58,25 @@ export function DashboardLayout({
             <aside className="h-fit rounded-[28px] border border-border/70 bg-card/85 p-3 shadow-sm shadow-black/5">
               <nav className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible">
                 {roleNavigation[role].map((item) => {
-                  const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+                  const isActive =
+                    pathname === item.href ||
+                    pathname.startsWith(`${item.href}/`);
 
                   return (
                     <Link
                       key={item.href}
                       className={cn(
-                        buttonVariants({ variant: isActive ? "default" : "ghost", size: "lg" }),
-                        "justify-start rounded-2xl px-4"
+                        buttonVariants({
+                          variant: isActive ? "default" : "ghost",
+                          size: "lg",
+                        }),
+                        "justify-start rounded-2xl px-4",
                       )}
                       href={item.href}
                     >
                       {item.label}
                     </Link>
-                  )
+                  );
                 })}
               </nav>
             </aside>
@@ -79,5 +86,5 @@ export function DashboardLayout({
         </div>
       </div>
     </RoleGuard>
-  )
+  );
 }

@@ -29,9 +29,15 @@ export function RoleEntryRedirect({ role }: { role: RoleName }) {
         return;
       }
 
-      const statusRes = await fetchJson<{ registered: boolean }>(
-        `/api/roles/status?role=${role}&wallet=${address}`,
-      );
+      let statusRes: { registered: boolean };
+      try {
+        statusRes = await fetchJson<{ registered: boolean }>(
+          `/api/roles/status?role=${role}&wallet=${address}`,
+        );
+      } catch {
+        if (!cancelled) router.replace("/");
+        return;
+      }
 
       if (cancelled) return;
 

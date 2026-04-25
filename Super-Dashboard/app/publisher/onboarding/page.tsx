@@ -6,7 +6,7 @@ import { toast } from "sonner"
 import { useAccount } from "wagmi"
 
 import { PageHeader } from "@/components/page-header"
-import { Button, buttonVariants } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -118,10 +118,13 @@ Vista.attachZone('your-element-id');`}
                 </Button>
               </div>
 
-              <a className={buttonVariants({ size: "sm" })} href="/publisher/dashboard">
+              <Button
+                onClick={() => (window.location.href = "/publisher/dashboard")}
+                size="sm"
+              >
                 Open dashboard
                 <ExternalLink className="size-4" />
-              </a>
+              </Button>
             </CardContent>
           </Card>
         ) : (

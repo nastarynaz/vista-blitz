@@ -156,6 +156,12 @@ export interface AdvertiserDashboardData {
   viewersPerDay: ChartPoint[]
 }
 
+export interface CampaignAudienceAnalytics {
+  preferenceBreakdown: Array<{ preference: string; count: number }>
+  ageBreakdown: Array<{ range: string; count: number }>
+  locationBreakdown: Array<{ location: string; count: number }>
+}
+
 export interface CampaignDetailData {
   campaign: CampaignRecord
   stats: {
@@ -166,6 +172,7 @@ export interface CampaignDetailData {
   }
   viewersPerDay: ChartPoint[]
   sessions: SessionListItem[]
+  audienceAnalytics: CampaignAudienceAnalytics
 }
 
 export interface PublisherDashboardData {
@@ -209,6 +216,11 @@ export interface UserDashboardData {
     ratePerSecond: number
     verified: boolean
   }
+  vault: {
+    totalEarned: number
+    totalWithdrawn: number
+    availableBalance: number
+  }
 }
 
 export interface UserHistoryData {
@@ -244,6 +256,7 @@ export interface OracleReceiptPayload {
   tokenId?: string
   sessionIdOnchain: string
   userWallet: string
+  publisherWallet?: string
   advertiserWallet?: string
   campaignIdOnchain: string
   secondsVerified: number

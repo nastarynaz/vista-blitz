@@ -19,7 +19,6 @@ import {
   Sparkles,
   UtensilsCrossed,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAccount } from "wagmi";
@@ -56,7 +55,6 @@ const preferenceIcons = {
 } satisfies Record<PreferenceOption, typeof Shirt>;
 
 export default function UserOnboardingPage() {
-  const router = useRouter();
   const { address } = useAccount();
   const [age, setAge] = useState("27");
   const [location, setLocation] = useState("Jakarta");
@@ -89,7 +87,7 @@ export default function UserOnboardingPage() {
         }),
       });
       toast.success("User profile created.");
-      router.replace("/user/dashboard");
+      window.location.href = "/user/dashboard";
     } catch (error) {
       toast.error(
         error instanceof Error

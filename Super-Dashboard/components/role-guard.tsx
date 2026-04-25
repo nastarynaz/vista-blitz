@@ -26,10 +26,19 @@ export function RoleGuard({
   openConnectModalRef.current = openConnectModal;
 
   const { address, isConnected, status } = useAccount();
+  const [mounted, setMounted] = useState(false);
   const [checking, setChecking] = useState(true);
   const [canRender, setCanRender] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) {
+      return;
+    }
+
     let cancelled = false;
 
     async function resolveAccess() {
@@ -88,6 +97,7 @@ export function RoleGuard({
   }, [
     address,
     isConnected,
+    mounted,
     redirectIfRegisteredTo,
     requireRegistration,
     role,
@@ -95,7 +105,7 @@ export function RoleGuard({
     status,
   ]);
 
-  if (checking || !canRender) {
+  if (!mounted || checking || !canRender) {
     return (
       <LoadingScreen description="Checking wallet connection and role access." />
     );
