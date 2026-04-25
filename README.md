@@ -51,6 +51,16 @@ A functional demonstration of how the Vista SDK transforms a standard social med
 - **Oracle Server:** Verifies attention signals and signs reward claims to prevent bot activity.
 - **Ponder Indexer:** Provides lightning-fast data for the dashboard analytics.
 
+## 📜 Deployment Addresses (Monad Testnet)
+
+| Contract | Address |
+| :--- | :--- |
+| **MockUSDC** | `0xc1E4d04ACe35A360D01f820cEB5f29Dea49f4eA7` |
+| **VistaEscrow** | `0x0Fb9A8303c2c058223d82384E13FF5295b0ec033` |
+| **VistaReceipt** | `0x03e2b98453BCe7E41897af50969B535354DcfD0b` |
+| **VistaStream** | `0x10d3340fd8F760997FF5be2BcEBf8893FEECEeCF` |
+| **VistaVault** | `0x7D75f5c1817fd5B7eb0d110C67dF08493705AA10` |
+
 ## 🛠️ Repository Structure
 
 - `/Smart-Contract-Monad-SDK`: Core Solidity contracts and the `@vista-protocol/sdk` source.
