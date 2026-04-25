@@ -8,6 +8,7 @@ const schema = z.object({
   campaignIdOnchain: z.string().min(10),
   userWallet: z.string().min(6),
   publisherWallet: z.string().min(6),
+  startedAt: z.string().optional(),
 })
 
 export async function POST(request: Request) {

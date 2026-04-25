@@ -6,6 +6,8 @@ import type {
   SessionRecord,
   StreamTickRecord,
   UserRecord,
+  VaultCreditRecord,
+  VaultWithdrawalRecord,
 } from "@/lib/types"
 
 const bytes32 = (fill: string) => `0x${fill.repeat(64)}`
@@ -25,6 +27,8 @@ export const mockDb: {
   sessions: SessionRecord[]
   streamTicks: StreamTickRecord[]
   receipts: ReceiptRecord[]
+  vaultCredits: VaultCreditRecord[]
+  vaultWithdrawals: VaultWithdrawalRecord[]
 } = {
   users: [
     {
@@ -219,6 +223,8 @@ export const mockDb: {
       created_at: "2026-04-19T10:03:34.000Z",
     },
   ],
+  vaultCredits: [],
+  vaultWithdrawals: [],
   receipts: [
     {
       id: "99999999-9999-4999-8999-999999999991",

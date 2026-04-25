@@ -1,11 +1,23 @@
 export type RoleName = "advertiser" | "publisher" | "user"
 export type PreferenceOption =
+  | "tech"
+  | "gaming"
   | "fashion"
   | "sport"
   | "food"
   | "healthy"
-  | "tech"
-  | "gaming"
+  | "finance"
+  | "crypto"
+  | "travel"
+  | "music"
+  | "automotive"
+  | "beauty"
+  | "education"
+  | "entertainment"
+  | "fitness"
+  | "news"
+  | "photography"
+  | "real-estate"
 
 export interface UserRecord {
   wallet_address: string
@@ -144,6 +156,12 @@ export interface AdvertiserDashboardData {
   viewersPerDay: ChartPoint[]
 }
 
+export interface CampaignAudienceAnalytics {
+  preferenceBreakdown: Array<{ preference: string; count: number }>
+  ageBreakdown: Array<{ range: string; count: number }>
+  locationBreakdown: Array<{ location: string; count: number }>
+}
+
 export interface CampaignDetailData {
   campaign: CampaignRecord
   stats: {
@@ -154,6 +172,7 @@ export interface CampaignDetailData {
   }
   viewersPerDay: ChartPoint[]
   sessions: SessionListItem[]
+  audienceAnalytics: CampaignAudienceAnalytics
 }
 
 export interface PublisherDashboardData {
@@ -197,6 +216,11 @@ export interface UserDashboardData {
     ratePerSecond: number
     verified: boolean
   }
+  vault: {
+    totalEarned: number
+    totalWithdrawn: number
+    availableBalance: number
+  }
 }
 
 export interface UserHistoryData {
@@ -229,10 +253,11 @@ export interface OracleTickPayload {
 }
 
 export interface OracleReceiptPayload {
-  tokenId: string
+  tokenId?: string
   sessionIdOnchain: string
   userWallet: string
-  advertiserWallet: string
+  publisherWallet?: string
+  advertiserWallet?: string
   campaignIdOnchain: string
   secondsVerified: number
   usdcPaid: number
@@ -254,4 +279,36 @@ export interface LiveTickEvent {
 export interface ActiveCampaignResult {
   user: UserRecord | null
   campaigns: CampaignRecord[]
+}
+
+export interface VaultCreditRecord {
+  id: string
+  wallet_address: string
+  session_id_onchain: string
+  campaign_id_onchain: string
+  amount: number
+  role: number
+  credited_at: string
+}
+
+export interface VaultWithdrawalRecord {
+  id: string
+  wallet_address: string
+  amount: number
+  withdrawn_at: string
+}
+
+export interface VaultBalanceData {
+  totalEarned: number
+  totalWithdrawn: number
+  availableBalance: number
+  credits: VaultCreditRecord[]
+  withdrawals: VaultWithdrawalRecord[]
+}
+
+export interface UserEarningsData {
+  totalEarned: number
+  totalSessions: number
+  totalSeconds: number
+  recentTicks: StreamTickRecord[]
 }

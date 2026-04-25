@@ -1,6 +1,5 @@
 "use client"
 
-import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
 import { useAccount } from "wagmi"
@@ -13,7 +12,6 @@ import { Label } from "@/components/ui/label"
 import { fetchJson } from "@/lib/http"
 
 export default function AdvertiserOnboardingPage() {
-  const router = useRouter()
   const { address } = useAccount()
   const [companyName, setCompanyName] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -33,7 +31,7 @@ export default function AdvertiserOnboardingPage() {
         }),
       })
       toast.success("Advertiser profile created.")
-      router.replace("/advertiser/dashboard")
+      window.location.href = "/advertiser/dashboard"
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to create advertiser profile.")
     } finally {

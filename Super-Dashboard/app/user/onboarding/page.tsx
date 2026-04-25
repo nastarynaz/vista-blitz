@@ -1,59 +1,82 @@
-"use client"
+"use client";
 
 import {
+  Banknote,
+  Bitcoin,
+  BookOpen,
+  Camera,
+  Car,
+  Clapperboard,
   Cpu,
   Dumbbell,
   Gamepad2,
+  Globe,
   HeartPulse,
+  Home,
+  Music,
+  Newspaper,
   Shirt,
+  Sparkles,
   UtensilsCrossed,
-} from "lucide-react"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
-import { toast } from "sonner"
-import { useAccount } from "wagmi"
+} from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { useAccount } from "wagmi";
 
-import { PageHeader } from "@/components/page-header"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { preferenceLabels, preferenceOptions } from "@/lib/constants"
-import { fetchJson } from "@/lib/http"
-import type { PreferenceOption } from "@/lib/types"
-import { cn } from "@/lib/utils"
+import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { preferenceLabels, preferenceOptions } from "@/lib/constants";
+import { fetchJson } from "@/lib/http";
+import type { PreferenceOption } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 const preferenceIcons = {
+  tech: Cpu,
+  gaming: Gamepad2,
   fashion: Shirt,
   sport: Dumbbell,
   food: UtensilsCrossed,
   healthy: HeartPulse,
-  tech: Cpu,
-  gaming: Gamepad2,
-} satisfies Record<PreferenceOption, typeof Shirt>
+  finance: Banknote,
+  crypto: Bitcoin,
+  travel: Globe,
+  music: Music,
+  automotive: Car,
+  beauty: Sparkles,
+  education: BookOpen,
+  entertainment: Clapperboard,
+  fitness: Dumbbell,
+  news: Newspaper,
+  photography: Camera,
+  "real-estate": Home,
+} satisfies Record<PreferenceOption, typeof Shirt>;
 
 export default function UserOnboardingPage() {
-  const router = useRouter()
-  const { address } = useAccount()
-  const [age, setAge] = useState("27")
-  const [location, setLocation] = useState("Jakarta")
-  const [selectedPreferences, setSelectedPreferences] = useState<PreferenceOption[]>(["tech", "gaming"])
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const { address } = useAccount();
+  const [age, setAge] = useState("27");
+  const [location, setLocation] = useState("Jakarta");
+  const [selectedPreferences, setSelectedPreferences] = useState<
+    PreferenceOption[]
+  >(["tech", "gaming"]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function togglePreference(preference: PreferenceOption) {
     setSelectedPreferences((current) =>
       current.includes(preference)
         ? current.filter((item) => item !== preference)
-        : [...current, preference]
-    )
+        : [...current, preference],
+    );
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (!address) return
+    event.preventDefault();
+    if (!address) return;
 
     try {
-      setIsSubmitting(true)
+      setIsSubmitting(true);
       await fetchJson("/api/users", {
         method: "POST",
         body: JSON.stringify({
@@ -62,13 +85,17 @@ export default function UserOnboardingPage() {
           location,
           preferences: selectedPreferences,
         }),
-      })
-      toast.success("User profile created.")
-      router.replace("/user/dashboard")
+      });
+      toast.success("User profile created.");
+      window.location.href = "/user/dashboard";
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to save your user profile.")
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Unable to save your user profile.",
+      );
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
   }
 
@@ -112,12 +139,14 @@ export default function UserOnboardingPage() {
             <div className="space-y-4">
               <div>
                 <Label>Preferences</Label>
-                <p className="mt-1 text-sm text-muted-foreground">Pick all categories you want VISTA to target.</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Pick all categories you want VISTA to target.
+                </p>
               </div>
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {preferenceOptions.map((preference) => {
-                  const Icon = preferenceIcons[preference]
-                  const active = selectedPreferences.includes(preference)
+                  const Icon = preferenceIcons[preference];
+                  const active = selectedPreferences.includes(preference);
 
                   return (
                     <button
@@ -125,12 +154,12 @@ export default function UserOnboardingPage() {
                         "rounded-[24px] border p-4 text-left transition-colors",
                         active
                           ? "border-primary bg-primary/10 text-primary"
-                          : "border-border/70 bg-background/70 text-foreground"
+                          : "border-border/70 bg-background/70 text-foreground",
                       )}
                       key={preference}
                       onClick={(event) => {
-                        event.preventDefault()
-                        togglePreference(preference)
+                        event.preventDefault();
+                        togglePreference(preference);
                       }}
                       type="button"
                     >
@@ -139,12 +168,19 @@ export default function UserOnboardingPage() {
                           <div className="inline-flex rounded-2xl border border-border/70 bg-background/80 p-2">
                             <Icon className="size-4" />
                           </div>
-                          <p className="font-medium">{preferenceLabels[preference]}</p>
+                          <p className="font-medium">
+                            {preferenceLabels[preference]}
+                          </p>
                         </div>
-                        <div className={cn("size-3 rounded-full", active ? "bg-primary" : "bg-border")} />
+                        <div
+                          className={cn(
+                            "size-3 rounded-full",
+                            active ? "bg-primary" : "bg-border",
+                          )}
+                        />
                       </div>
                     </button>
-                  )
+                  );
                 })}
               </div>
             </div>
@@ -156,5 +192,5 @@ export default function UserOnboardingPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
