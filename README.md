@@ -26,22 +26,22 @@ A unified interface for all protocol participants to manage their activity and v
 
 #### **For Advertisers**
 Create and fund campaigns, set target metrics, and track ROI with precision.
-![Advertiser Dashboard](/screenshots/advertiser.png)
+![Advertiser Dashboard](screenshots/advertiser.png)
 
 #### **For Publishers**
 Manage ad zones, monitor site performance, and track revenue generated from hosted ads.
-![Publisher Dashboard](/screenshots/publisher.png)
+![Publisher Dashboard](screenshots/publisher.png)
 
 #### **For Users**
 Track lifetime earnings, view detailed session history, and manage profile preferences to receive more relevant ads.
-![User Dashboard](/screenshots/user.png)
+![User Dashboard](screenshots/user.png)
 
 ### 3. 📱 Mock Farcaster (Client Simulation)
 A functional demonstration of how the Vista SDK transforms a standard social media experience. 
 - In this mock client, users browse a Farcaster-like feed.
 - When an ad enters the viewport, the SDK activates.
 - A real-time USDC ticker shows earnings accumulating second-by-second.
-![Mock Client Earnings](/screenshots/mock-getmoney.png)
+![Mock Client Earnings](screenshots/mock-getmoney.png)
 
 ---
 
