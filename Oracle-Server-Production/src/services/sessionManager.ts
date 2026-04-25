@@ -48,16 +48,12 @@ export function validateHeartbeat(session: SessionState, payload: HeartbeatPaylo
   }
   session.usedNonces.add(payload.nonce);
 
-  if (Math.abs(Date.now() - payload.timestamp) > 1500) {
+  if (Math.abs(Date.now() - payload.timestamp) > 30_000) {
     return { valid: false, reason: 'timestamp drift' };
   }
 
   if (payload.timestamp - session.lastHeartbeat < 500) {
     return { valid: false, reason: 'too fast' };
-  }
-
-  if (payload.score < 0.60) {
-    return { valid: false, reason: 'score too low' };
   }
 
   return { valid: true };

@@ -119,8 +119,9 @@ export function UsdcCounter({
 
       if (cancelled) return;
 
-      const sessionEarned = ((ticks ?? []) as Array<Record<string, unknown>>)
-        .reduce((sum, t) => sum + Number(t.user_amount ?? 0), 0);
+      const sessionEarned = (
+        (ticks ?? []) as Array<Record<string, unknown>>
+      ).reduce((sum, t) => sum + Number(t.user_amount ?? 0), 0);
 
       setSessionId(sessionIdOnchain);
       setVerified(Boolean(row.active));
@@ -274,7 +275,7 @@ export function UsdcCounter({
         className,
       )}
     >
-      <CardContent className="space-y-6 p-6 sm:p-8">
+      {/* <CardContent className="space-y-6 p-6 sm:p-8">
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-2">
             <p className="text-sm uppercase tracking-[0.3em] text-muted-foreground">
@@ -323,7 +324,7 @@ export function UsdcCounter({
             {sessionId ? `${sessionId.slice(0, 10)}...` : "Waiting for stream"}
           </span>
         </div>
-      </CardContent>
+      </CardContent> */}
     </Card>
   );
 }
