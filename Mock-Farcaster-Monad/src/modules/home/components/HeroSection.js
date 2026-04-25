@@ -1,0 +1,67 @@
+import { Heart, MessageCircle, Repeat2 } from "lucide-react";
+export default function HeroSection({ posts }) {
+  return (
+    <section className="overflow-hidden rounded-2xl border border-white/10 bg-[#0b0b0f]">
+      <div className="flex items-center justify-between px-5 py-4">
+        <h1 className="text-3xl font-semibold text-white">Home</h1>
+        <button
+          type="button"
+          className="rounded-full bg-indigo-600 px-5 py-2 text-sm font-semibold text-white"
+        >
+          Post
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 border-b border-white/10">
+        <button type="button" className="border-b-2 border-violet-500 px-4 py-3 text-sm font-semibold text-white">
+          Home
+        </button>
+        <button type="button" className="px-4 py-3 text-sm font-semibold text-zinc-500">
+          Following
+        </button>
+      </div>
+
+      <div>
+        {posts.map((post) => (
+          <article key={`${post.handle}-${post.timeAgo}`} className="border-b border-white/10 px-5 py-4">
+            <div className="flex items-start gap-3">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-zinc-700 text-sm font-bold text-white">
+                {post.author.slice(0, 1).toUpperCase()}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="flex items-center gap-2 text-base text-white">
+                  <span className="font-semibold">{post.author}</span>
+                  <span className="text-zinc-500">{post.timeAgo}</span>
+                </p>
+
+                <p className="mt-1 whitespace-pre-line text-[20px] leading-7 text-zinc-200">{post.text}</p>
+
+                {post.media ? (
+                  <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-zinc-900">
+                    <div className="h-92.5 w-full bg-linear-to-br from-amber-900/70 via-amber-700/70 to-zinc-700/70" />
+                  </div>
+                ) : null}
+
+                <div className="mt-4 flex items-center gap-8 text-sm text-zinc-500">
+                  <span className="flex items-center gap-1">
+                    <Heart className="h-4 w-4" />
+                    {post.likes}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Repeat2 className="h-4 w-4" />
+                    {post.recasts}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <MessageCircle className="h-4 w-4" />
+                    {post.replies}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}

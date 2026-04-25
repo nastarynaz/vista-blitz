@@ -1,0 +1,86 @@
+import Link from "next/link";
+import { ChevronRight, Search } from 'lucide-react';
+
+
+export default function TrendingSection({
+  channels,
+  links,
+  currentUser,
+}) {
+  return (
+    <aside className="space-y-4 fixed">
+      <div className="rounded-xl flex flex-row items-center border border-white/10 bg-[#0b0b0f] p-2.5">
+        <Search className="h-6 w-6 text-zinc-400" />
+        <input className="flex items-center justify-between gap-2 px-3 py-2 w-full text-sm text-zinc-400 focus:outline-none" type="text" placeholder="Search casts, channels and users" >
+        </input>
+      </div>
+
+      {/* <div className="rounded-2xl border border-white/10 bg-[#18181d] p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-3xl font-semibold text-white">Discover Mini Apps</p>
+            <p className="mt-1 text-sm text-zinc-400">View Mini Apps in Action</p>
+          </div>
+          <button
+            type="button"
+            className="grid h-fit p-2 place-items-center rounded-full bg-indigo-600 text-sm font-bold text-white"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-x-3 gap-y-1 text-sm text-zinc-500">
+          {links.map((link) => (
+            <a key={link} href="#" className="hover:text-zinc-300">
+              {link}
+            </a>
+          ))}
+        </div>
+      </div> */}
+
+      <div className="rounded-2xl border border-white/10 bg-[#0b0b0f] p-4">
+        <p className="mb-3 text-sm font-semibold text-zinc-400">Popular channels</p>
+        <div className="flex flex-wrap gap-2">
+          {channels.map((channel) => (
+            <button
+              type="button"
+              key={channel}
+              className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:bg-white/10"
+            >
+              {channel}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* <div className="rounded-2xl border border-white/10 bg-[#18181d] p-4"> */}
+        {/* <p className="mb-3 text-sm font-semibold text-zinc-300">Wallet</p> */}
+        {currentUser ? (
+          <div className="grid gap-3 rounded-xl border border-white/10 bg-black/40 p-4">
+            <p className="text-sm text-zinc-400">Wallet Connected as</p>
+            <p className="text-base font-bold text-white">{currentUser.displayName}</p>
+            <p className="font-mono text-sm text-zinc-300">{currentUser.handle}</p>
+
+            <div className="mt-2">
+              <p className="text-xs uppercase tracking-wider text-emerald-300">USDC Balance</p>
+              <p className="mt-1 text-2xl font-semibold text-emerald-200">1,250.00 USDC</p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid gap-3 rounded-xl border border-white/10 bg-black/40 p-4">
+            <p className="text-base font-semibold text-white">Wallet</p>
+            <p className="text-sm leading-relaxed text-zinc-400">
+              Login dulu untuk melihat wallet demo dan saldo USDC.
+            </p>
+            <Link
+              href="/auth"
+              className="mt-1 inline-flex items-center justify-center rounded-xl bg-linear-to-br from-violet-500 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110"
+            >
+              Login
+            </Link>
+          </div>
+        )}
+      {/* </div> */}
+    </aside>
+  );
+}
