@@ -1,26 +1,31 @@
-import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from "@/lib/auth/constants";
 
-function getSessionSecret() {
-  const secret = process.env.AUTH_SESSION_SECRET;
+function nowSeconds() {
+  return Math.floor(Date.now() / 1000);
+}
 
-  if (!secret || secret.length < 32) {
-    throw new Error("AUTH_SESSION_SECRET must be set and at least 32 characters long.");
+function encodeSessionPayload(payload) {
+  return Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
+}
+
+function decodeSessionPayload(token) {
+  try {
+    return JSON.parse(Buffer.from(token, "base64url").toString("utf8"));
+  } catch {
+    return null;
   }
-
-  return new TextEncoder().encode(secret);
 }
 
 export async function createSessionToken({ address, chainId }) {
-  const secret = getSessionSecret();
+  const issuedAt = nowSeconds();
 
-  return await new SignJWT({ chainId })
-    .setProtectedHeader({ alg: "HS256" })
-    .setSubject(address.toLowerCase())
-    .setIssuedAt()
-    .setExpirationTime(`${SESSION_MAX_AGE_SECONDS}s`)
-    .sign(secret);
+  return encodeSessionPayload({
+    address: address.toLowerCase(),
+    chainId,
+    exp: issuedAt + SESSION_MAX_AGE_SECONDS,
+    iat: issuedAt,
+  });
 }
 
 export async function verifySessionToken(token) {
@@ -28,23 +33,26 @@ export async function verifySessionToken(token) {
     return null;
   }
 
-  try {
-    const secret = getSessionSecret();
-    const { payload } = await jwtVerify(token, secret);
+  const payload = decodeSessionPayload(token);
 
-    if (!payload?.sub) {
-      return null;
-    }
-
-    return {
-      address: payload.sub,
-      chainId: typeof payload.chainId === "number" ? payload.chainId : null,
-      exp: payload.exp,
-      iat: payload.iat,
-    };
-  } catch {
+  if (!payload || typeof payload !== "object") {
     return null;
   }
+
+  if (typeof payload.address !== "string" || !payload.address) {
+    return null;
+  }
+
+  if (typeof payload.exp !== "number" || payload.exp <= nowSeconds()) {
+    return null;
+  }
+
+  return {
+    address: payload.address,
+    chainId: typeof payload.chainId === "number" ? payload.chainId : null,
+    exp: payload.exp,
+    iat: typeof payload.iat === "number" ? payload.iat : null,
+  };
 }
 
 export async function setSessionCookie({ address, chainId }) {
