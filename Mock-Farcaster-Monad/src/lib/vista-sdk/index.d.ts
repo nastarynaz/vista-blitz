@@ -4,6 +4,7 @@ interface VistaConfig {
     oracleUrl: string;
     campaignId: string;
     publisherWallet: string;
+    requireFullscreen?: boolean;
 }
 interface AttentionSignals {
     visibility: number;
@@ -44,6 +45,14 @@ interface VistaStatus {
     sessionAmount: number;
     score: number;
 }
+interface OnboardingParams {
+    wallet: string;
+    dashboardUrl?: string;
+}
+interface EarningOverlayParams {
+    campaignTitle?: string;
+    targetElement?: HTMLElement | null;
+}
 
 declare class Vista {
     private config;
@@ -55,16 +64,60 @@ declare class Vista {
     private lastValidSeconds;
     private lastScore;
     private isActive;
+    private beforeunloadHandler;
+    private visibilitychangeHandler;
+    private listenersSetup;
+    private isFullscreenActive;
+    private fullscreenchangeHandler;
+    private trackedElementId;
+    private overlayIntervalId;
+    private overlayFullscreenHandler;
+    private overlayScrollHandler;
     init(config: VistaConfig): void;
     attachZone(elementId: string): void;
     detachZone(): void;
     onEarn(callback: (data: EarnCallbackData) => void): void;
     getStatus(): VistaStatus;
+    showOnboardingModal(params: OnboardingParams): void;
+    showEarningOverlay(params?: EarningOverlayParams): void;
+    private removeEarningOverlay;
+    private animateValue;
     private buildPayload;
     private handleResponse;
     private postSessionEnd;
+    private setupFullscreenListener;
+    private removeFullscreenListener;
+    private checkIsFullscreen;
     private setupSessionEndListeners;
+    private removeSessionEndListeners;
 }
 declare const vista: Vista;
 
-export { type AttentionSignals, type EarnCallbackData, type HeartbeatPayload, type HeartbeatResponse, vista as Vista, type VistaConfig, type VistaStatus };
+declare const MONAD_CHAIN_ID = 10143;
+declare const MONAD_RPC_URL = "https://testnet-rpc.monad.xyz";
+declare const MONAD_EXPLORER_URL = "https://testnet.monadexplorer.com";
+interface WalletAuthMessageParams {
+    domain: string;
+    uri: string;
+    address: string;
+    nonce: string;
+    chainId: number;
+    issuedAt: string;
+}
+declare function buildWalletAuthMessage(params: WalletAuthMessageParams): string;
+interface WalletSignInParams {
+    address: string;
+    chainId: number;
+    targetChainId?: number;
+    domain: string;
+    uri: string;
+    nonceEndpoint: string;
+    verifyEndpoint: string;
+    switchChain?: (chainId: number) => Promise<{
+        id: number;
+    }>;
+    signMessage: (message: string) => Promise<string>;
+}
+declare function performWalletSignIn(params: WalletSignInParams): Promise<void>;
+
+export { type AttentionSignals, type EarnCallbackData, type EarningOverlayParams, type HeartbeatPayload, type HeartbeatResponse, MONAD_CHAIN_ID, MONAD_EXPLORER_URL, MONAD_RPC_URL, type OnboardingParams, vista as Vista, type VistaConfig, type VistaStatus, type WalletAuthMessageParams, type WalletSignInParams, buildWalletAuthMessage, performWalletSignIn };

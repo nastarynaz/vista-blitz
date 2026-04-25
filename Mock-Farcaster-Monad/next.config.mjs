@@ -6,7 +6,10 @@ const sdkEntry = path.resolve(__dirname, "src/lib/vista-sdk/index.mjs");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactCompiler: true,
+  onDemandEntries: {
+    maxInactiveAge: 15 * 1000,
+    pagesBufferLength: 2,
+  },
   turbopack: {
     resolveAlias: {
       "vista-protocol": "./src/lib/vista-sdk/index.mjs",

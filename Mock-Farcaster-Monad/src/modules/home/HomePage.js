@@ -4,9 +4,12 @@ import { useEffect, useState } from "react";
 import HeroSection from "@/modules/home/components/HeroSection";
 import NavBar from "@/modules/home/components/NavBar";
 import TrendingSection from "@/modules/home/components/TrendingSection";
-import { CHANNELS, FEED_POSTS, RIGHT_LINKS, SIDEBAR_ITEMS } from "@/modules/home/components/constants";
-import { useVista } from "@/modules/vista/useVista";
-
+import {
+  CHANNELS,
+  FEED_POSTS,
+  RIGHT_LINKS,
+  SIDEBAR_ITEMS,
+} from "@/modules/home/components/constants";
 function toWalletUser(address) {
   return {
     displayName: "Wallet User",
@@ -18,13 +21,6 @@ function toWalletUser(address) {
 export default function HomePage() {
   const [currentUser, setCurrentUser] = useState(null);
   const [campaigns, setCampaigns] = useState([]);
-
-  const activeCampaignId = campaigns[0]?.campaign_id_onchain ?? null;
-  const vistaState = useVista({
-    userWallet: currentUser?.address,
-    zoneId: "vista-content-zone",
-    campaignId: activeCampaignId,
-  });
 
   useEffect(() => {
     let isActive = true;
@@ -77,10 +73,19 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#06070a] text-zinc-100">
       <main className="mx-auto grid w-full max-w-340 grid-cols-1 px-3 pb-3 lg:grid-cols-[250px_1fr_420px]">
-        <NavBar items={SIDEBAR_ITEMS} isLoggedIn={Boolean(currentUser)} onLogout={handleLogout} />
+        <NavBar
+          items={SIDEBAR_ITEMS}
+          isLoggedIn={Boolean(currentUser)}
+          walletAddress={currentUser?.address}
+          onLogout={handleLogout}
+        />
 
         <section id="discover" className="min-w-0">
-          <HeroSection posts={FEED_POSTS} ads={campaigns} />
+          <HeroSection
+            posts={FEED_POSTS}
+            ads={campaigns}
+            userWallet={currentUser?.address}
+          />
         </section>
 
         <section className="min-w-0">

@@ -60,36 +60,6 @@ const wagmiConfig = createConfig({
   chains: [monadChain],
   connectors: [
     injected({
-      target: {
-        id: "brave",
-        name: "Brave Wallet",
-        provider: () => {
-          const providers = getInjectedProviders();
-          const brave = providers.find(isBraveProvider);
-          if (brave) {
-            return brave;
-          }
-
-          // In some Brave setups the provider does not expose a brave-specific marker.
-          // If we're in Brave and at least one injected provider exists, use it as fallback.
-          if (isBraveBrowser() && providers.length > 0) {
-            return providers[0];
-          }
-
-          return undefined;
-        },
-      },
-      shimDisconnect: true,
-    }),
-    injected({
-      target: {
-        id: "metamask",
-        name: "MetaMask",
-        provider: pickProvider((provider) => provider?.isMetaMask && !provider?.isBraveWallet),
-      },
-      shimDisconnect: true,
-    }),
-    injected({
       shimDisconnect: true,
     }),
   ],
@@ -99,7 +69,17 @@ const wagmiConfig = createConfig({
 });
 
 export default function Web3Provider({ children }) {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 5 * 60 * 1000,
+            gcTime: 10 * 60 * 1000,
+          },
+        },
+      })
+  );
 
   return (
     <WagmiProvider config={wagmiConfig}>

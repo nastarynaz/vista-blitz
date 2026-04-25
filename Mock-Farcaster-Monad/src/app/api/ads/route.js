@@ -6,12 +6,13 @@ export async function GET(request) {
     return Response.json({ campaigns: [] });
   }
 
-  const dashboardUrl = process.env.VISTA_DASHBOARD_URL ?? "http://localhost:3031";
+  const dashboardUrl =
+    process.env.NEXT_PUBLIC_VISTA_DASHBOARD_URL ?? "http://localhost:3031";
 
   try {
     const res = await fetch(
       `${dashboardUrl}/api/campaigns/active?userWallet=${encodeURIComponent(userWallet)}`,
-      { cache: "no-store" }
+      { cache: "no-store" },
     );
 
     if (!res.ok) {

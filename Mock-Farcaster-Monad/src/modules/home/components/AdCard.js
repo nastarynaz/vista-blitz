@@ -1,4 +1,10 @@
-import { ExternalLink, Heart, MessageCircle, Repeat2, Share } from "lucide-react";
+import {
+  ExternalLink,
+  Heart,
+  MessageCircle,
+  Repeat2,
+  Share,
+} from "lucide-react";
 
 export default function AdCard({ campaign }) {
   const advertiserHandle = `${campaign.advertiser_wallet.slice(0, 6)}...${campaign.advertiser_wallet.slice(-4)}`;
@@ -18,7 +24,9 @@ export default function AdCard({ campaign }) {
             </span>
           </p>
 
-          <p className="mt-1 text-[20px] leading-7 text-zinc-200">{campaign.title}</p>
+          <p className="mt-1 text-[20px] leading-7 text-zinc-200">
+            {campaign.title}
+          </p>
 
           {campaign.creative_url && (
             <div className="mt-4 overflow-hidden rounded-2xl border border-indigo-500/20">

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Vista } from "vista-protocol";
+import { Vista } from "@/lib/vista-sdk";
 
 const API_KEY = process.env.NEXT_PUBLIC_VISTA_API_KEY;
 const ORACLE_URL = process.env.NEXT_PUBLIC_VISTA_ORACLE_URL;
